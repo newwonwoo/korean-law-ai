@@ -242,11 +242,7 @@ header{
     </div>
   </div>
   <div class="header-keys">
-    <div class="key-input-wrap">
-      <span class="key-label">GROQ</span>
-      <input class="key-input" id="groqKey" type="password" placeholder="gsk_xxxx (필수)">
-      <span class="key-status" id="groqStatus">미입력</span>
-    </div>
+
     <div class="key-input-wrap">
       <span class="key-label">법제처</span>
       <input class="key-input" id="lawKey" type="password" placeholder="OC키 (선택)">
@@ -320,7 +316,7 @@ header{
 <script>
 const PROXY = 'https://api.allorigins.win/get?url='
 const LAW_BASE = 'https://www.law.go.kr/DRF'
-const GROQ_BASE = 'https://api.groq.com/openai/v1/chat/completions'
+const GROQ_BASE = '/api/groq'
 let currentTab = 'law'
 
 const HOUSING_LAWS = [
@@ -345,7 +341,7 @@ const HOUSING_LAWS = [
 ]
 
 // ── 키 관리
-function getGroqKey(){ return document.getElementById('groqKey').value.trim() }
+function getGroqKey(){ return 'server' }
 function getLawKey(){ return document.getElementById('lawKey').value.trim() }
 
 function updateStatus(id, statusId, prefix){
@@ -354,32 +350,26 @@ function updateStatus(id, statusId, prefix){
   if(v){ el.textContent='✓ 입력됨'; el.className='key-status ok' }
   else { el.textContent='미입력'; el.className='key-status no' }
 }
-document.getElementById('groqKey').addEventListener('input', ()=>{ updateStatus('groqKey','groqStatus'); localStorage.setItem('groq_key', document.getElementById('groqKey').value) })
+
 document.getElementById('lawKey').addEventListener('input', ()=>{ updateStatus('lawKey','lawStatus'); localStorage.setItem('law_oc', document.getElementById('lawKey').value) })
 
 // 복원
 ;(()=>{
-  const gk = localStorage.getItem('groq_key')
   const lk = localStorage.getItem('law_oc')
-  if(gk){ document.getElementById('groqKey').value=gk; updateStatus('groqKey','groqStatus') }
   if(lk){ document.getElementById('lawKey').value=lk; updateStatus('lawKey','lawStatus') }
 })()
 
 // ── Groq AI 호출
 async function callGroq(systemPrompt, userPrompt, maxTokens=1500){
-  const key = getGroqKey()
-  if(!key) throw new Error('Groq API 키를 입력해주세요 (console.groq.com 무료 발급)')
   const res = await fetch(GROQ_BASE, {
     method:'POST',
-    headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      model:'llama-3.3-70b-versatile',
       messages:[
         {role:'system', content: systemPrompt},
         {role:'user', content: userPrompt}
       ],
-      max_tokens: maxTokens,
-      temperature: 0.3
+      max_tokens: maxTokens
     })
   })
   if(!res.ok){
